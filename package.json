@@ -2,7 +2,7 @@
   "name": "moyuread",
   "displayName": "MoyuRead",
   "description": "",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "publisher": "qiziyue",
   "engines": {
     "vscode": "^1.84.0"
