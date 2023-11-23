@@ -119,11 +119,12 @@ function activate(context) {
 			const fspath = editor.document.uri.fsPath;
 			//条件语句，检查当前编辑器的文件路径是否与指定的路径（'xc4210_self_test.c'）匹配。如果匹配，显示一些状态栏项，否则隐藏它们。
 			if (fspath && fspath.toLowerCase() === path.join(__dirname, novel_name).toLowerCase()) {
+				changeBar.text = "XXXX"
 				changeBar.show()
-				processBar.show();
-				prevBar.show();
-				nextBar.show();
-				jumpBar.show();
+				processBar.hide();
+				prevBar.hide();
+				nextBar.hide();
+				jumpBar.hide();
 			} else {
 				changeBar.hide();
 				processBar.hide();
@@ -173,6 +174,7 @@ function init(){
 	if (editor) {
 		const fspath = editor.document.uri.fsPath
 		if (fspath && fspath.toLowerCase() === path.join(__dirname, 'novel.js').toLowerCase()) {
+		changeBar.text = "隐藏"
 		changeBar.show()
 		processBar.show()
 		nextBar.show()
@@ -408,19 +410,22 @@ function changeBarState(){
 	if (fspath && fspath.toLowerCase() !== path.join(__dirname, novel_name).toLowerCase()) {
 		return;
 	}
-	if (!boolChange) {
+
+	if (changeBar.text == "XXXX") {
+		changeBar.text = "隐藏"
 		changeBar.show()
-		boolChange = 1
-		processBar.hide();
-		prevBar.hide();
-		nextBar.hide();
-		jumpBar.hide();
-	}else{
-		boolChange = 0
+		//boolChange = 1
 		processBar.show();
 		prevBar.show();
 		nextBar.show();
 		jumpBar.show();
+	}else{
+		changeBar.text = "XXXX"
+		//boolChange = 0
+		processBar.hide();
+		prevBar.hide();
+		nextBar.hide();
+		jumpBar.hide();
 		changeBar.show()
 	}
 } 
