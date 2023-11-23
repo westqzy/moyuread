@@ -1,0 +1,16 @@
+def add_comments(file_path, interval):
+    with open(file_path, 'r') as file:
+        lines = file.readlines()
+
+    new_lines = []
+    for i, line in enumerate(lines):
+        new_lines.append(line)
+        if (i + 1) % interval == 0:
+            comment = f'// {{{(i + 1) // interval}}}\n'
+            new_lines.append(comment)
+
+    with open(file_path, 'w') as file:
+        file.writelines(new_lines)
+
+# 使用示例，假设文件名为example.c，每隔5行插入一段注释
+add_comments('xc4210_self_test.c', 5)

@@ -1,0 +1,45 @@
+{
+  "name": "moyuread",
+  "displayName": "MoyuRead",
+  "description": "",
+  "version": "0.0.3",
+  "publisher": "qiziyue",
+  "engines": {
+    "vscode": "^1.84.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "moyuread.openNovel",
+        "title": "OpenNovel"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "moyuread.prevpage",
+        "key": "ctrl+alt+;"
+      },
+      {
+        "command": "moyuread.nextpage",
+        "key": "ctrl+alt+'"
+      }
+    ]
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "pretest": "npm run lint",
+    "test": "node ./test/runTest.js"
+  },
+  "devDependencies": {
+		"@types/mocha": "^2.2.42",
+		"@types/node": "^10.12.21",
+		"eslint": "^5.13.0",
+		"typescript": "^3.3.1",
+		"vscode": "^1.1.28"
+  }
+}
