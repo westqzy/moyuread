@@ -22,7 +22,7 @@
  * @file    osa_pub.c
  * @brief   This is a brief description.
  * @details This is the detail description.
-//娉娉袅袅十三余，豆蔻梢头二月初。
+//{0}
  * @par HISTORY:
  * DATE         AUTHOR          CRID                    DESC\n
  * 2019-11-06   GuXiaofeng    HawkBug10000054          [Hawk]modify case "3001" reply
@@ -47,7 +47,7 @@
 
 #include <vec-mem-modes.h>
 #include "demo_hwa_qbman.h"
-//春风十里扬州路，卷上珠帘总不如。
+//{1}
 #include "demo_hwa_qbman_config.h"
 
 #define VECTOR_U32_LEN (16)
@@ -2419,6 +2419,12 @@ void self_test_callback(void)
 
     fic_config();
     
+//     “你这臭小子，想得到美……”美少妇噗嗤一声笑了出来，却也没有继续趴在桌上，而是坐直了身子。
+if(D[i] != A[i])
+{
+    testcase_fail();
+}
+// 
     algo_qbman_init();
 
     common_qman_config();

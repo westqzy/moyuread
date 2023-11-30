@@ -4,12 +4,38 @@ const vscode = require('vscode')
 const path = require("path")
 const fs = require("fs")
 //const tpl = require("./muban.c")
+// 读书模式
+let read_mode =  1;
+let muban = 'muban.c'
+let novel_name = 'xc4210_self_test.c'
+// 每次显示几行
+let hang_1 = 2;
+let hang = 2;
+// 小说地址
+let books_dir = ""
+// const userSetting = vscode.workspace.getConfiguration().get('yourExtension.parameter', 'default-value');
+let fake_work = `
+if(D[i] != A[i])
+{
+    testcase_fail();
+}
+`;
+let fake_work2 = `
+else if(i < 8)
+{
+    if(B[i] != C[i])
+    {
+        testcase_fail();
+    }
+}
+`;
+// 获取行数
+let fake_work_lines = fake_work.split('\n').length-2;
 let novelPath = ''
 let env = null
-let novel_name = 'xc4210_self_test.c'
 // 小说内容按行存储
 let novelLines = []
-let boolChange = 0
+// let boolChange = 0
 // 总共的页码
 let totalPage = 0
 // 底部状态栏按键
@@ -18,7 +44,7 @@ let nextBar = null
 let prevBar = null
 let jumpBar = null
 let changeBar = null
-
+let lineNumber = hang_1+1;
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 // 字符串占位符
@@ -41,7 +67,6 @@ String.prototype.format = function () {
  * @param {vscode.ExtensionContext} context
  */
 function activate(context) {
-	init();
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
 	// This line of code will only be executed once when your extension is activated
 	console.log('Congratulations, your extension "moyuread" is now active!');
@@ -49,9 +74,14 @@ function activate(context) {
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with  registerCommand
 	// The commandId parameter must match the command field in package.json
+	get_setting_value();
+	init();
 	let open = vscode.commands.registerCommand('moyuread.openNovel', function () {
 		//vscode.window.showInformationMessage("HELLO");
 		// The code you place here will be executed every time your command is executed
+			// 获取当前活动的文本编辑器实例
+		get_setting_value();
+		init2();	
 		const options = {
 			// 选中第3行第9列到第3行第17列
 			//selection: new vscode.Range(new vscode.Position(2, 8), new vscode.Position(2, 16));
@@ -91,7 +121,7 @@ function activate(context) {
 	let clickBar = vscode.commands.registerCommand('moyuread.clickStatusBar', () => {
 		initPathAndEnv();
 		const quickPickOptions = {
-			placeHolder: `请在路径${path.join(__dirname, 'books')}下放置书籍!格式txt(UTF-8)`,
+			placeHolder: `请在设置中设置书籍存放地址`,
 			canPickMany: false // 设置为 true 允许多选
 		};
 		vscode.window.showQuickPick(Object.keys(env['books']), quickPickOptions).then((value) => {
@@ -141,9 +171,26 @@ function activate(context) {
 		}
 	});
 	
-
-
-
+            // vscode.window.onDidChangeTextEditorSelection(event => {
+			// 	let editor = vscode.window.activeTextEditor;
+			// 	if (!editor) {
+			// 		return;
+			// 	}
+			// 	// 获取当前编辑器文档的文件路径
+			// 	const fspath = editor.document.uri.fsPath;
+			// 	if (fspath && fspath.toLowerCase() !== path.join(__dirname, novel_name).toLowerCase()) {
+			// 		return;
+			// 	}
+			
+			// 	if (event.textEditor === editor) {
+			// 			// 获取当前光标位置
+			// 		let newPosition = editor.selection.active;
+			// 		lineNumber = editor.selection.active.line - hang;
+			// 		// 在这里执行你希望在光标位置变化时触发的操作
+			// 		console.log('光标位置变化到行:', newPosition.line + 1, '列:', newPosition.character + 1);
+			// 	}
+				
+            // });
 
 
 
@@ -163,7 +210,12 @@ module.exports = {
 	deactivate
 }
 
-
+function init2(){
+	initPathAndEnv()
+	initNovelInfo()
+	//initStatusBar()
+	getPage()
+}
 
 function init(){
 	initPathAndEnv()
@@ -183,7 +235,7 @@ function init(){
 		}
 	}
 
-	vscode.window.showInformationMessage(`请在路径${path.join(__dirname, 'books')}下放置txt（UTF-8编码）书籍!`);
+	
 	// throw new Error(novelPath)
 }
 
@@ -201,7 +253,7 @@ function initPathAndEnv(){
 		// 处理空字符串的情况，可能是赋予默认值或其他逻辑
 		env = {}
 	}
-	const booksDir = path.join(__dirname, 'books')
+	const booksDir = path.join(books_dir)
 	let books = fs.readdirSync(booksDir) // 获取book文件夹中文件
 	books = books.filter(book => book.endsWith('txt')) // 获取文件中以txt结尾的文件
 	books.forEach(book => {
@@ -222,24 +274,49 @@ function initPathAndEnv(){
 	})
 
 	if (books.length === 0) {
-		throw new Error(`没有txt格式的书籍,请在路径${path.join(__dirname, 'books')}下放置书籍!`)
+		throw new Error(`没有txt格式的书籍,请在设置中存放书籍地址`)
 	}
 	if (!env['currentBook'] || !books.find(b => b === env['currentBook'])) {
 		env['currentBook'] = books[0]
 	}
 }
 
+// 获取设置参数
+function get_setting_value(){
+	let previousValue = read_mode;
+	read_mode =  vscode.workspace.getConfiguration().get('moyuread.ReadMode', 1);
+	if(read_mode === 2 && previousValue !== 2){
+		hang = 100;
+		const envPath = path.join(__dirname, "env.json")
+		fs.writeFileSync(envPath, '{}')
+	}
+	else if(read_mode === 1 && previousValue !== 1) {
+		hang = hang_1;
+		const envPath = path.join(__dirname, "env.json")
+		fs.writeFileSync(envPath, '{}')
+	}
+	else if(read_mode !== 1 && read_mode !== 2){
+		throw new Error(`阅读模式只能选择1或2！`)
+	}
 
+
+	books_dir =  vscode.workspace.getConfiguration().get('moyuread.BooksPath', "");
+	if (books_dir === ""){
+		vscode.window.showInformationMessage(`请在设置中设置书籍存放地址`);
+		books_dir = path.join(__dirname, "books")
+	}
+
+}
 
 
 // 初始化小说内容
 function initNovelInfo(){
 	//同步读取文件内容。env['currentBook'] 包含要读取的文件名。
-	var content = fs.readFileSync(path.join(__dirname, 'books', env['currentBook']))
+	var content = fs.readFileSync(path.join(books_dir, env['currentBook']))
 	// 读取文件内容后，将其转换为字符串（使用 toString() 方法），然后使用 split("\n") 方法按行分割成一个包含每行内容的数组。数组的每个元素对应文件中的一行
 	novelLines = content.toString().split("\n")
 	//,通过将总行数（novelLines.length）除以 100 来计算总页数（假设每页包含 100 行）。
-	totalPage = Math.ceil(novelLines.length / 100)
+	totalPage = Math.ceil(novelLines.length / hang)
 }
 
 // 初始化状态栏
@@ -278,22 +355,70 @@ function initStatusBar(){
 	changeBar.command = 'moyuread.changeStatusBar'
 }
 
-
+function delayedOperation() {
+    console.log('这段代码会在延迟后执行');
+}
 
 
 
 function getPage(){
 	// 截取页数
-	const lines = novelLines.slice((env['books'][env['currentBook']] - 1) * 100, (env['books'][env['currentBook']] * 100))
-	const filePath = path.join(__dirname, 'muban.c')
-	const data = fs.readFileSync(filePath, 'utf8');
-	var template = data.format(...lines)
-	fs.writeFileSync(novelPath, template)
+	const lines = novelLines.slice((env['books'][env['currentBook']] - 1) * hang, (env['books'][env['currentBook']] * hang))
+	const filePath = path.join(__dirname, muban)
+	// const data = fs.readFileSync(filePath, 'utf8');
+	// var template = data.format(...lines)
+	// fs.writeFileSync(novelPath, template)
 
-	if (processBar) {
-		processBar.text = `${env['currentBook']}   ${env['books'][env['currentBook']]} | ${totalPage}`
+	
+	if (read_mode == 1){
+		let editor = vscode.window.activeTextEditor;
+		if (editor) {
+			// 获取当前光标所在行号
+			lineNumber = editor.selection.active.line-hang-fake_work_lines;
+			//console.log(lineNumber)
+				// 获取要插入的文本
+			let commentedText = lines.map(line => `// ${line}`).join('\n');
+			let combinedText = commentedText.replace(/\n/, `${fake_work}`);
+			//combinedText = `${combinedText}${fake_work2}`;
+				// 获取当前文档的内容
+			const data = fs.readFileSync(filePath, 'utf8');
+
+				// 在给定行号处插入文本
+			let lines_data = data.split('\n');
+			lines_data.splice(lineNumber, 0, combinedText);
+			let modifiedData = lines_data.join('\n');
+
+				// 使用 writeFileSync 覆盖原始文件
+
+			fs.writeFileSync(novelPath, modifiedData, { flag: 'w' });
+
+			// let position = new vscode.Position(lineNumber+2, 0);
+			// let range = new vscode.Range(position, position);
+			// editor.selection = new vscode.Selection(range.start, range.end);
+			// editor.revealRange(range);
+			
+		}
+
+
+		
+		if (processBar) {
+			processBar.text = `${env['currentBook']}   ${env['books'][env['currentBook']]} | ${totalPage}`
+		}
+		setTimeout(scrollToHere, 100);
+		//scrollToHere()
+		
 	}
-	scrollToTop()
+	else if(read_mode == 2){
+		const data = fs.readFileSync(filePath, 'utf8');
+		var template = data.format(...lines)
+		vscode.workspace.saveAll()
+		fs.writeFileSync(novelPath, template, { flag: 'w' })
+	
+		if (processBar) {
+			processBar.text = `${env['currentBook']}   ${env['books'][env['currentBook']]} | ${totalPage}`
+		}
+		scrollToTop()
+	}
 	updateEnv()
 }
 
@@ -313,6 +438,22 @@ function scrollToTop() {
 	let editor = vscode.window.activeTextEditor;
 	if (editor) {
 		let range = editor.document.lineAt(0).range;
+		editor.selection = new vscode.Selection(range.start, range.end);
+		editor.revealRange(range);
+	}
+}
+// 切换页后将光标定位到相同位置
+function scrollToHere() {
+	let editor = vscode.window.activeTextEditor;
+	if (editor) {
+		// let range = editor.document.lineAt(0).range;
+		// editor.selection = new vscode.Selection(range.start, range.end);
+		// editor.revealRange(range);
+		// let lineNumber = editor.selection.active.line
+		// console.log(lineNumber)
+		let position = new vscode.Position(lineNumber+hang+fake_work_lines, 0);
+		console.log(lineNumber+hang)
+		let range = new vscode.Range(position, position);
 		editor.selection = new vscode.Selection(range.start, range.end);
 		editor.revealRange(range);
 	}

@@ -2,7 +2,7 @@
   "name": "moyuread",
   "displayName": "MoyuRead",
   "description": "",
-  "version": "0.0.6",
+  "version": "0.1.3",
   "publisher": "qiziyue",
   "engines": {
     "vscode": "^1.84.0"
@@ -28,7 +28,23 @@
         "command": "moyuread.nextpage",
         "key": "ctrl+alt+'"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "moyuread",  
+      "properties": {
+        "moyuread.ReadMode": {
+          "type": "integer",
+          "default": 1,
+          "description": "阅读模式，设置完需要重新打开插件"
+        },
+        "moyuread.BooksPath": {
+          "type": "string",
+          "default": "",
+          "description": "设置小说地址"
+        }
+      }
+      
+    }
   },
   "scripts": {
     "lint": "eslint .",
